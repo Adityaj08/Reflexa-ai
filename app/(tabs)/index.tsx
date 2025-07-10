@@ -1,16 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useJournalStore } from '@/store/journalStore';
 import JournalEntryCard from '@/components/JournalEntryCard';
 import AIPrompts from '@/components/AIPrompts';
 import { formatMonth } from '@/utils/dateUtils';
-import { Plus, Search, MessageCircle } from 'lucide-react-native';
+import { Plus, Search, MessageCircle, X } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useTheme } from '@/store/ThemeContext';
+import { SearchFilters } from '@/store/journalStore';
 
 export default function JournalScreen() {
   const router = useRouter();
@@ -18,10 +19,47 @@ export default function JournalScreen() {
   const hapticFeedback = useSettingsStore(state => state.hapticFeedback);
   const [currentMonth, setCurrentMonth] = useState(formatMonth(new Date()));
   const { theme } = useTheme();
+  const { showSearchModal, searchFilters, clearSearchFilters } = useJournalStore();
+  const [activeFilters, setActiveFilters] = useState<SearchFilters | null>(null);
+
+  // Listen for changes in global search filters
+  useEffect(() => {
+    if (searchFilters) {
+      setActiveFilters(searchFilters);
+    }
+  }, [searchFilters]);
+  
+  // Filter entries based on search criteria
+  const filteredEntries = useMemo(() => {
+    if (!activeFilters) return entries;
+
+    return entries.filter(entry => {
+      // Filter by emotions
+      if (activeFilters.selectedEmotions.length > 0 && 
+          !activeFilters.selectedEmotions.includes(entry.emotion)) {
+        return false;
+      }
+
+      // Filter by date range
+      const entryDate = new Date(entry.date);
+      if (activeFilters.startDate && entryDate < activeFilters.startDate) {
+        return false;
+      }
+      if (activeFilters.endDate) {
+        const endDate = new Date(activeFilters.endDate);
+        endDate.setHours(23, 59, 59, 999);
+        if (entryDate > endDate) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [entries, activeFilters]);
   
   // Group entries by month
   const entriesByMonth: { [key: string]: any[] } = {};
-  entries.forEach(entry => {
+  (filteredEntries || []).forEach(entry => {
     const date = new Date(entry.date);
     const monthKey = date.toLocaleString('default', { month: 'long', year: 'numeric' });
     
@@ -55,32 +93,61 @@ export default function JournalScreen() {
   const handleChat = () => {
     router.push('/chat');
   };
+
+  const handleSearch = (filters: SearchFilters) => {
+    setActiveFilters(filters);
+  };
+
+  const clearSearch = () => {
+    setActiveFilters(null);
+    clearSearchFilters();
+  };
   
   const renderMonthSection = ({ item: month }: { item: string }) => (
     <View style={styles.monthSection}>
       <Text style={[styles.monthTitle, { color: theme.text }]}>{month}</Text>
-      {entriesByMonth[month].map(entry => (
+      {entriesByMonth[month]?.map(entry => (
         <JournalEntryCard key={entry.id} entry={entry} />
       ))}
     </View>
   );
 
   const ListHeaderComponent = () => (
-    <AIPrompts />
+    <>
+      {activeFilters && (
+        <View style={styles.activeFiltersContainer}>
+          <Text style={[styles.activeFiltersText, { color: theme.textSecondary }]}>
+            {activeFilters.selectedEmotions.length > 0 && 
+              `${activeFilters.selectedEmotions.length} emotions selected`}
+            {activeFilters.startDate && 
+              ` • From ${activeFilters.startDate.toLocaleDateString()}`}
+            {activeFilters.endDate && 
+              ` to ${activeFilters.endDate.toLocaleDateString()}`}
+          </Text>
+          <Pressable onPress={clearSearch}>
+            <X size={20} color={theme.textSecondary} />
+          </Pressable>
+        </View>
+      )}
+      <AIPrompts />
+    </>
   );
   
   return (
     <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: theme.text }]}>Journal</Text>
-        <Pressable style={[styles.searchButton, { backgroundColor: theme.card }]}>
+        <Text style={[styles.title, { color: theme.text }]}>Today</Text>
+        <Pressable 
+          style={[styles.searchButton, { backgroundColor: theme.card }]}
+          onPress={showSearchModal}
+        >
           <Search size={24} color={theme.text} />
         </Pressable>
       </View>
       
-      {entries.length > 0 ? (
+      {(filteredEntries || []).length > 0 ? (
         <FlatList
-          data={months}
+          data={months || []}
           renderItem={renderMonthSection}
           keyExtractor={item => item}
           contentContainerStyle={styles.listContent}
@@ -89,11 +156,15 @@ export default function JournalScreen() {
         />
       ) : (
         <View style={styles.emptyContainer}>
-          <AIPrompts />
+          <ListHeaderComponent />
           <View style={styles.emptyContent}>
-            <Text style={[styles.emptyTitle, { color: theme.text }]}>No journal entries yet</Text>
+            <Text style={[styles.emptyTitle, { color: theme.text }]}>
+              {activeFilters ? 'No matching entries found' : 'No journal entries yet'}
+            </Text>
             <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
-              Start journaling to track your emotions and gain insights into your mental well-being.
+              {activeFilters 
+                ? 'Try adjusting your search filters'
+                : 'Start journaling to track your emotions and gain insights into your mental well-being.'}
             </Text>
           </View>
         </View>
@@ -127,6 +198,8 @@ export default function JournalScreen() {
           <Plus size={24} color={theme.text} />
         </Pressable>
       </View>
+
+
     </SafeAreaView>
   );
 }
@@ -143,7 +216,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   title: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: '700',
   },
   searchButton: {
@@ -155,7 +228,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 16,
-    paddingBottom: 100, // Extra space for FAB
+    paddingBottom: 100, 
   },
   monthSection: {
     marginBottom: 24,
@@ -188,10 +261,11 @@ const styles = StyleSheet.create({
   },
   fabContainer: {
     position: 'absolute',
-    bottom: 16,
+    bottom: Platform.OS === 'ios' ? 140 : 130,
     right: 16,
     alignItems: 'flex-end',
     gap: 16,
+    zIndex: 1000,
   },
   fabButton: {
     width: 56,
@@ -210,5 +284,16 @@ const styles = StyleSheet.create({
   chatButton: {
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.1)',
+  },
+  activeFiltersContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginBottom: 8,
+  },
+  activeFiltersText: {
+    fontSize: 14,
   },
 });

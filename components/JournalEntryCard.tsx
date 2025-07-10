@@ -80,23 +80,7 @@ export default function JournalEntryCard({ entry }: JournalEntryCardProps) {
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      'Delete Entry',
-      'Are you sure you want to delete this entry? This action cannot be undone.',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel'
-        },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
             deleteEntry(entry.id);
-          }
-        }
-      ]
-    );
   };
 
   const handleAuthSuccess = () => {
@@ -124,8 +108,20 @@ export default function JournalEntryCard({ entry }: JournalEntryCardProps) {
         onPress={handlePress}
       >
         <View style={[styles.dateContainer, { backgroundColor: theme.card }]}>
+          <View style={[styles.dateBackground, { backgroundColor: theme.cardDark }]}>
           <Text style={[styles.dayOfWeek, { color: theme.textSecondary }]}>{formatDayOfWeek(date)}</Text>
           <Text style={[styles.dayOfMonth, { color: theme.text }]}>{formatDayOfMonth(date)}</Text>
+          </View>
+          <Pressable 
+            style={({ pressed }) => [
+              styles.moreButton, 
+              { backgroundColor: theme.card },
+              pressed && { opacity: 0.7, transform: [{ scale: 0.95 }] }
+            ]}
+            onPress={() => setMenuVisible(true)}
+          >
+            <MoreHorizontal size={35} color={theme.text} />
+          </Pressable>
           {entry.isBookmarked && (
             <View style={styles.bookmarkIndicator} />
           )}
@@ -165,12 +161,6 @@ export default function JournalEntryCard({ entry }: JournalEntryCardProps) {
                 </>
               )}
             </View>
-            <Pressable 
-              style={styles.moreButton}
-              onPress={() => setMenuVisible(true)}
-            >
-              <MoreHorizontal size={18} color={theme.textSecondary} />
-            </Pressable>
           </View>
         </View>
       </Pressable>
@@ -207,19 +197,29 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   dateContainer: {
-    width: 70,
+    width: 80,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
+    borderRadius: 8,
+    padding: 8,
+    gap: 4,
+  },
+  dateBackground: {
+    alignItems: 'center',
+    borderRadius: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    marginBottom: 10,
+    width: '100%',
   },
   dayOfWeek: {
     fontSize: 12,
-    fontWeight: '600',
-    marginBottom: 4,
+    lineHeight: 20,
+    fontWeight: '500',
   },
   dayOfMonth: {
-    fontSize: 24,
-    fontWeight: '700',
+    fontSize: 20,
+    fontWeight: '600',
+    lineHeight: 24,
   },
   contentContainer: {
     flex: 1,
@@ -275,9 +275,18 @@ const styles = StyleSheet.create({
   moreButton: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 4,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
   },
   bookmarkIndicator: {
     width: 4,

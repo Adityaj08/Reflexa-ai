@@ -1,4 +1,5 @@
-import { JournalEntry, EmotionCount } from '@/types/journal';
+import { EmotionCount } from '@/types/journal';
+import { JournalEntry } from '@/store/journalStore';
 import { TimeRange } from '@/components/TimeRangeSelector';
 
 export const getEmotionColor = (emotion: string): string => {

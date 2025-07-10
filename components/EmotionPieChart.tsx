@@ -57,12 +57,14 @@ export default function EmotionPieChart({ data, title, timeRange }: EmotionPieCh
         <PieChart
           data={chartData}
           width={Dimensions.get('window').width - 64}
-          height={220}
+          height={240}
           chartConfig={chartConfig}
           accessor="count"
           backgroundColor="transparent"
-          paddingLeft="0"
+          paddingLeft="25"
+          center={[0, 0]}
           absolute
+          hasLegend={true}
           style={styles.chart}
         />
       </View>
@@ -83,6 +85,7 @@ const styles = StyleSheet.create({
   },
   chartContainer: {
     alignItems: 'center',
+    paddingBottom: 20,
   },
   chart: {
     marginVertical: 8,

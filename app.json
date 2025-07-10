@@ -1,48 +1,50 @@
 {
   "expo": {
-    "name": "reflexa-ai",
-    "slug": "reflexa-ai",
-    "version": "0.0.1",
+    "name": "Reflexa",
+    "slug": "reflexa",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "reflexa",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#000000"
     },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.reflexa.ai"
+      "bundleIdentifier": "com.reflexa.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#000000"
       },
-      "package": "com.reflexa.ai"
+      "package": "com.reflexa.app"
     },
     "web": {
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "bundler": "metro",
+      "output": "static",
+      "router": {
+        "origin": false
+      }
     },
     "plugins": [
-      [
-        "expo-router"
-      ]
+      "expo-router"
     ],
-    "updates": {
-      "enabled": true,
-      "fallbackToCacheTimeout": 0
-    },
     "experiments": {
-      "typedRoutes": true
+      "typedRoutes": true,
+      "tsconfigPaths": true
     },
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "77b4a017-875e-4073-90e2-6563195e8ba3"
+        "projectId": "f82ac33c-57bd-4d64-8d2b-33f87ee0fb41"
       }
     },
     "owner": "adityajoshi"

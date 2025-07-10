@@ -56,7 +56,7 @@ export default function EmotionBadge({
     styles.container,
     size === 'small' && styles.containerSmall,
     size === 'large' && styles.containerLarge,
-    { backgroundColor: `${emotion.color}20` }
+    { backgroundColor: 'transparent' }
   ];
 
   const textStyle = [
@@ -66,19 +66,36 @@ export default function EmotionBadge({
     { color: emotion.color }
   ];
 
+  // Progress bar width (0-100%)
+  const progress = Math.max(0, Math.min(confidence, 100));
+
   return (
     <View style={containerStyle}>
+      {/* Progress Bar Background */}
+      <View style={styles.progressBarBg}>
+        <View style={[
+          styles.progressBarFill,
+          {
+            width: `${progress}%`,
+            backgroundColor: emotion.color,
+            opacity: 0.25
+          }
+        ]} />
+      </View>
+      {/* Content on top of progress bar */}
+      <View style={styles.contentRow}>
       <EmotionIcon 
         emotion={emotion.id} 
         size={getIconSize()} 
         color={emotion.color} 
       />
       <Text style={textStyle}>{emotion.name}</Text>
-      {showConfidence && (
+      {showConfidence && emotion.id !== 'neutral' && (
         <Text style={[textStyle, styles.confidence]}>
           {confidence <= 1 ? Math.round(confidence * 100) : Math.round(confidence)}%
         </Text>
       )}
+      </View>
     </View>
   );
 }
@@ -91,6 +108,8 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 16,
     gap: 6,
+    position: 'relative',
+    overflow: 'hidden',
   },
   containerSmall: {
     paddingHorizontal: 8,
@@ -103,6 +122,28 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     gap: 8,
+  },
+  progressBarBg: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0,0,0,0.08)',
+    overflow: 'hidden',
+    zIndex: 0,
+  },
+  progressBarFill: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    borderRadius: 16,
+    zIndex: 1,
+  },
+  contentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    zIndex: 2,
+    flex: 1,
   },
   text: {
     fontSize: 14,

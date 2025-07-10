@@ -14,8 +14,8 @@ import { useTheme } from '@/store/ThemeContext';
 
 export default function InsightsView() {
   const { entries } = useJournalStore();
-  const [chartStyle, setChartStyle] = useState<ChartStyle>('line');
-  const [timeRange, setTimeRange] = useState<TimeRange>('year');
+  const [chartStyle, setChartStyle] = useState<ChartStyle>('pie');
+  const [timeRange, setTimeRange] = useState<TimeRange>('week');
   const { theme } = useTheme();
 
   // Calculate streaks

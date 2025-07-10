@@ -7,13 +7,25 @@ import { getMonthKey, isInCurrentWeek, getWeekRange } from '@/utils/dateUtils';
 export interface JournalEntry {
   id: string;
   content: string;
+  additionalContent?: string;
   date: string;
   emotion: string;
   confidence: number;
+  allEmotions?: Array<{
+    emotion: string;
+    confidence: number;
+    isAnalyzed: boolean;
+  }>;
   image?: string | null;
   userCorrectedEmotion?: string;
   isBookmarked?: boolean;
   isPrivate?: boolean;
+}
+
+interface CachedPrompts {
+  prompts: Array<{ question: string; context?: string }>;
+  lastEntryId: string | null;
+  timestamp: number;
 }
 
 interface JournalState {
@@ -27,6 +39,10 @@ interface JournalState {
   currentStreak: number;
   longestStreak: number;
   
+  // Search modal state
+  isSearchModalVisible: boolean;
+  searchFilters: SearchFilters | null;
+  
   // Actions
   addEntry: (entry: JournalEntry) => void;
   updateEntry: (id: string, updates: Partial<JournalEntry>) => void;
@@ -35,11 +51,27 @@ interface JournalState {
   toggleBookmark: (id: string) => void;
   togglePrivate: (id: string) => void;
   
+  // Search modal actions
+  showSearchModal: () => void;
+  hideSearchModal: () => void;
+  setSearchFilters: (filters: SearchFilters) => void;
+  clearSearchFilters: () => void;
+  
   // Selectors
   getEntryById: (id: string) => JournalEntry | undefined;
   getEntriesByDate: (date: string) => JournalEntry[];
   getTotalEntries: () => number;
   getBookmarkedEntries: () => JournalEntry[];
+  
+  cachedPrompts: CachedPrompts;
+  setCachedPrompts: (prompts: CachedPrompts) => void;
+}
+
+export interface SearchFilters {
+  selectedEmotions: string[];
+  startDate: Date | null;
+  endDate: Date | null;
+  searchText: string;
 }
 
 // Helper functions to calculate stats
@@ -173,13 +205,25 @@ export const useJournalStore = create<JournalState>()(
       monthlyEmotions: [],
       currentStreak: 0,
       longestStreak: 0,
+      isSearchModalVisible: false,
+      searchFilters: null,
+      cachedPrompts: {
+        prompts: [],
+        lastEntryId: null,
+        timestamp: 0
+      },
       
       addEntry: (entry) => {
         set((state) => {
           const newEntries = [entry, ...state.entries];
           return {
             entries: newEntries,
-            ...updateStats(newEntries)
+            ...updateStats(newEntries),
+            cachedPrompts: {
+              prompts: [],
+              lastEntryId: null,
+              timestamp: 0
+            }
           };
         });
       },
@@ -191,7 +235,12 @@ export const useJournalStore = create<JournalState>()(
           );
           return {
             entries: newEntries,
-            ...updateStats(newEntries)
+            ...updateStats(newEntries),
+            cachedPrompts: {
+              prompts: [],
+              lastEntryId: null,
+              timestamp: 0
+            }
           };
         });
       },
@@ -201,7 +250,12 @@ export const useJournalStore = create<JournalState>()(
           const newEntries = state.entries.filter((entry) => entry.id !== id);
           return {
             entries: newEntries,
-            ...updateStats(newEntries)
+            ...updateStats(newEntries),
+            cachedPrompts: {
+              prompts: [],
+              lastEntryId: null,
+              timestamp: 0
+            }
           };
         });
       },
@@ -213,7 +267,12 @@ export const useJournalStore = create<JournalState>()(
           );
           return {
             entries: newEntries,
-            ...updateStats(newEntries)
+            ...updateStats(newEntries),
+            cachedPrompts: {
+              prompts: [],
+              lastEntryId: null,
+              timestamp: 0
+            }
           };
         });
       },
@@ -225,7 +284,12 @@ export const useJournalStore = create<JournalState>()(
           );
           return {
             entries: newEntries,
-            ...updateStats(newEntries)
+            ...updateStats(newEntries),
+            cachedPrompts: {
+              prompts: [],
+              lastEntryId: null,
+              timestamp: 0
+            }
           };
         });
       },
@@ -237,7 +301,12 @@ export const useJournalStore = create<JournalState>()(
           );
           return {
             entries: newEntries,
-            ...updateStats(newEntries)
+            ...updateStats(newEntries),
+            cachedPrompts: {
+              prompts: [],
+              lastEntryId: null,
+              timestamp: 0
+            }
           };
         });
       },
@@ -268,7 +337,32 @@ export const useJournalStore = create<JournalState>()(
       
       getBookmarkedEntries: () => {
         return get().entries.filter((entry) => entry.isBookmarked);
-      }
+      },
+      
+      setCachedPrompts: (prompts) =>
+        set(() => ({
+          cachedPrompts: prompts
+        })),
+      
+      showSearchModal: () =>
+        set(() => ({
+          isSearchModalVisible: true
+        })),
+      
+      hideSearchModal: () =>
+        set(() => ({
+          isSearchModalVisible: false
+        })),
+      
+      setSearchFilters: (filters) =>
+        set(() => ({
+          searchFilters: filters
+        })),
+      
+      clearSearchFilters: () =>
+        set(() => ({
+          searchFilters: null
+        })),
     }),
     {
       name: 'journal-storage',

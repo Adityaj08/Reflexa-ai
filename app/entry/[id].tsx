@@ -57,7 +57,7 @@ export default function EntryDetailScreen() {
     if (selectedEmotion !== entry.emotion) {
       correctEmotion(entry.id, selectedEmotion);
       
-      if (hapticFeedback && Platform.OS !== 'web') {
+      if (hapticFeedback) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
       
@@ -80,7 +80,7 @@ export default function EntryDetailScreen() {
           onPress: () => {
             deleteEntry(entry.id);
             
-            if (hapticFeedback && Platform.OS !== 'web') {
+            if (hapticFeedback) {
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
             }
             

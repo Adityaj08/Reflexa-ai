@@ -10,6 +10,7 @@ interface SettingsState {
   biometricEnabled: boolean;
   pinEnabled: boolean;
   pin: string | null;
+  followUpEnabled: boolean;
   
   // Actions
   toggleReminder: () => void;
@@ -19,6 +20,7 @@ interface SettingsState {
   toggleBiometric: () => void;
   togglePin: () => void;
   setPin: (pin: string | null) => void;
+  toggleFollowUp: () => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -31,6 +33,7 @@ export const useSettingsStore = create<SettingsState>()(
       biometricEnabled: false,
       pinEnabled: false,
       pin: null,
+      followUpEnabled: true, // Default: enabled
       
       toggleReminder: () => set((state) => ({ 
         reminderEnabled: !state.reminderEnabled 
@@ -60,7 +63,11 @@ export const useSettingsStore = create<SettingsState>()(
       setPin: (pin) => set({
         pin,
         pinEnabled: !!pin
-      })
+      }),
+
+      toggleFollowUp: () => set((state) => ({
+        followUpEnabled: !state.followUpEnabled
+      }))
     }),
     {
       name: 'settings-storage',

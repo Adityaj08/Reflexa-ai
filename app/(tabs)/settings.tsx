@@ -16,9 +16,13 @@ import {
   Palette,
   Fingerprint,
   KeyRound,
+  MessageSquareMore,
+  Heart,
 } from 'lucide-react-native';
 import { useTheme } from '@/store/ThemeContext';
 import * as LocalAuthentication from 'expo-local-authentication';
+import { useRouter } from 'expo-router';
+import { Linking } from 'react-native';
 
 export default function SettingsScreen() {
   const { 
@@ -33,6 +37,8 @@ export default function SettingsScreen() {
     pinEnabled,
     togglePin,
     setPin,
+    followUpEnabled,
+    toggleFollowUp,
   } = useSettingsStore();
 
   const { theme, themeType, setThemeType } = useTheme();
@@ -41,6 +47,7 @@ export default function SettingsScreen() {
   const [confirmPin, setConfirmPin] = useState('');
   const [error, setError] = useState('');
   const [hasBiometric, setHasBiometric] = useState(false);
+  const router = useRouter();
   
   useEffect(() => {
     checkBiometricAvailability();
@@ -110,115 +117,131 @@ export default function SettingsScreen() {
   };
   
   return (
-    <SafeAreaView edges={['bottom']} style={[styles.container, { backgroundColor: theme.background }]}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: theme.text }]}>Settings</Text>
-        </View>
-        
-        <View style={[styles.upgradeCard, { backgroundColor: theme.primary + '20' }]}>
-          <View style={[styles.upgradeIcon, { backgroundColor: theme.primary }]}>
-            <Star size={24} color={theme.text} />
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <SafeAreaView edges={['top']} style={styles.safeTop}>
+        <ScrollView 
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.content}
+        >
+          <View style={styles.header}>
+            <Text style={[styles.title, { color: theme.text }]}>Settings</Text>
           </View>
-          <View style={styles.upgradeContent}>
-            <Text style={[styles.upgradeTitle, { color: theme.text }]}>Upgrade to Premium</Text>
-            <Text style={[styles.upgradeSubtitle, { color: theme.textSecondary }]}>
-              Unlimited entries, advanced insights, and more!
-            </Text>
-          </View>
-        </View>
-        
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>Security</Text>
           
-          <View style={[styles.settingsGroup, { backgroundColor: theme.card }]}>
-            {hasBiometric && (
+          <View style={[styles.upgradeCard, { backgroundColor: theme.primary + '20' }]}>
+            <View style={[styles.upgradeIcon, { backgroundColor: theme.primary }]}>
+              <Star size={24} color={theme.text} />
+            </View>
+            <View style={styles.upgradeContent}>
+              <Text style={[styles.upgradeTitle, { color: theme.text }]}>Upgrade to Premium</Text>
+              <Text style={[styles.upgradeSubtitle, { color: theme.textSecondary }]}>
+                Unlimited entries, advanced insights, and more!
+              </Text>
+            </View>
+          </View>
+          
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Security</Text>
+            
+            <View style={[styles.settingsGroup, { backgroundColor: theme.card }]}>
+              {hasBiometric && (
+                <SettingsItem 
+                  icon={<Fingerprint size={24} color={theme.primary} />}
+                  title="Biometric Authentication"
+                  subtitle="Use fingerprint or face ID"
+                  showToggle
+                  toggleValue={biometricEnabled}
+                  onToggleChange={toggleBiometric}
+                />
+              )}
+              
               <SettingsItem 
-                icon={<Fingerprint size={24} color={theme.primary} />}
-                title="Biometric Authentication"
-                subtitle="Use fingerprint or face ID"
+                icon={<KeyRound size={24} color={theme.primary} />}
+                title="PIN Lock"
+                subtitle="Set a 4-digit PIN"
                 showToggle
-                toggleValue={biometricEnabled}
-                onToggleChange={toggleBiometric}
+                toggleValue={pinEnabled}
+                onToggleChange={handleTogglePin}
               />
-            )}
-            
-            <SettingsItem 
-              icon={<KeyRound size={24} color={theme.primary} />}
-              title="PIN Lock"
-              subtitle="Set a 4-digit PIN"
-              showToggle
-              toggleValue={pinEnabled}
-              onToggleChange={handleTogglePin}
-            />
+            </View>
           </View>
-        </View>
-        
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>Preferences</Text>
           
-          <View style={[styles.settingsGroup, { backgroundColor: theme.card }]}>
-            <SettingsItem 
-              icon={<Bell size={24} color={theme.primary} />}
-              title="Daily Reminder"
-              subtitle="Get reminded to journal daily"
-              showToggle
-              toggleValue={reminderEnabled}
-              onToggleChange={toggleReminder}
-            />
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Preferences</Text>
             
-            <SettingsItem 
-              icon={<Vibrate size={24} color={theme.primary} />}
-              title="Haptic Feedback"
-              subtitle="Vibration feedback when interacting"
-              showToggle
-              toggleValue={hapticFeedback}
-              onToggleChange={toggleHapticFeedback}
-            />
-            
-            <SettingsItem 
-              icon={<Gauge size={24} color={theme.primary} />}
-              title="Show Confidence"
-              subtitle="Display emotion detection confidence"
-              showToggle
-              toggleValue={showEmotionConfidence}
-              onToggleChange={toggleEmotionConfidence}
-            />
-            
-            <SettingsItem 
-              icon={getThemeIcon()}
-              title="Theme"
-              subtitle={getThemeSubtitle()}
-              onPress={cycleTheme}
-            />
+            <View style={[styles.settingsGroup, { backgroundColor: theme.card }]}>
+              <SettingsItem 
+                icon={<Bell size={24} color={theme.primary} />}
+                title="Daily Reminder"
+                subtitle="Get reminded to journal daily"
+                showToggle
+                toggleValue={reminderEnabled}
+                onToggleChange={toggleReminder}
+              />
+              
+              <SettingsItem 
+                icon={<Vibrate size={24} color={theme.primary} />}
+                title="Haptic Feedback"
+                subtitle="Vibration feedback when interacting"
+                showToggle
+                toggleValue={hapticFeedback}
+                onToggleChange={toggleHapticFeedback}
+              />
+              
+              <SettingsItem 
+                icon={<Gauge size={24} color={theme.primary} />}
+                title="Show Confidence"
+                subtitle="Display emotion detection confidence"
+                showToggle
+                toggleValue={showEmotionConfidence}
+                onToggleChange={toggleEmotionConfidence}
+              />
+
+              <SettingsItem 
+                icon={<MessageSquareMore size={24} color={theme.primary} />}
+                title="Follow-up Questions"
+                subtitle="Show AI-powered follow-up questions"
+                showToggle
+                toggleValue={followUpEnabled}
+                onToggleChange={toggleFollowUp}
+              />
+              
+              <SettingsItem 
+                icon={getThemeIcon()}
+                title="Theme"
+                subtitle={getThemeSubtitle()}
+                onPress={cycleTheme}
+              />
+            </View>
           </View>
-        </View>
-        
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>About</Text>
           
-          <View style={[styles.settingsGroup, { backgroundColor: theme.card }]}>
-            <SettingsItem 
-              icon={<HelpCircle size={24} color={theme.primary} />}
-              title="Help & Support"
-              onPress={() => {}}
-            />
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>About</Text>
             
-            <SettingsItem 
-              icon={<Share2 size={24} color={theme.primary} />}
-              title="Share with Friends"
-              onPress={() => {}}
-            />
-            
-            <SettingsItem 
-              icon={<Info size={24} color={theme.primary} />}
-              title="About MindJournal"
-              subtitle="Version 1.0.0"
-              onPress={() => {}}
-            />
+            <View style={[styles.settingsGroup, { backgroundColor: theme.card }]}>
+              <SettingsItem 
+                icon={<HelpCircle size={24} color={theme.primary} />}
+                title="Help & Support"
+                onPress={() => router.push('/settings/help')}
+              />
+              
+              <SettingsItem 
+                icon={<Info size={24} color={theme.primary} />}
+                title="About MindJournal"
+                subtitle="Version 1.0.0"
+                onPress={() => router.push('/settings/about')}
+              />
+
+              <SettingsItem 
+                icon={<Heart size={24} color="#FF0000" />}
+                title="Made by Aditya"
+                subtitle="github.com/adityaj08"
+                onPress={() => Linking.openURL('https://github.com/adityaj08')}
+              />
+            </View>
           </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </SafeAreaView>
+      <SafeAreaView edges={['bottom']} style={[styles.safeBottom, { backgroundColor: theme.background }]} />
 
       <Modal
         visible={showPinModal}
@@ -289,13 +312,23 @@ export default function SettingsScreen() {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingBottom: 50,
+  },
+  safeTop: {
+    flex: 1,
+  },
+  safeBottom: {
+    flex: 0,
+  },
+  content: {
+    paddingBottom: 32,
   },
   header: {
     padding: 16,
